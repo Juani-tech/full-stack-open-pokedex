@@ -8,6 +8,7 @@
             branches: [main]
             types: [opened, synchronize]
 
+
         jobs:
           simple_deployment_pipeline:
             runs-on: ubuntu-20.04
@@ -52,3 +53,4 @@
                 env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   DEFAULT_BUMP: patch
+
