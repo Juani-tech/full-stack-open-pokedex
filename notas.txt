@@ -1,0 +1,9 @@
+- Auto deploy: No
+
+## Deploy hook
+- name: Trigger deployment
+  run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+
+Donde:
+    - RENDER_SERVICE_ID: se saca de la url que provee la deploy url
+    - RENDER_API_KEY: Hay que generarla dentro de render 
