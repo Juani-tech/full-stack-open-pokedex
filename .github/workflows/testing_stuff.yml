@@ -18,11 +18,16 @@ jobs:
         env:
           COMMITS: ${{ toJson(github.event.commits) }}
         run: echo "$COMMITS"
+      - name: commitsss
+        env:
+          COMMITTSS: ${{ github.event.commits.*.message }}
+        run: echo "$COMMITTSS"
+      - name: easnv
+        run: echo "$github.event"
       - name: commit messages
         env:
-          COMMIT_MESSAGES: ${{ join(github.event.commits.*.message, ',') }}
+          COMMIT_MESSAGES: ${{ github.event.commits.*.message }}
         run: echo "$COMMIT_MESSAGES"
-
       - name: check for skip
         if: contains(env.COMMIT_MESSAGES, '#SKIP')
         run: echo "Skipping due to commit message containing #SKIP"
