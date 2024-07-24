@@ -13,6 +13,7 @@ app.get('/version', (req, res) => {
 
 
 app.get('/health', (req, res) => {
+  if (true) throw Error("Error...")
   res.send('ok')
 })
 
