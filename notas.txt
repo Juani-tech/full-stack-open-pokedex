@@ -7,3 +7,94 @@
 Donde:
     - RENDER_SERVICE_ID: se saca de la url que provee la deploy url
     - RENDER_API_KEY: Hay que generarla dentro de render 
+
+
+How do you keep your main branch green then? Avoid committing any changes directly to the main branch. Instead, commit your code on a branch based on the freshest possible version of the main branch. Once you think the branch is ready to be merged into the main you create a GitHub Pull Request (also referred to as PR).
+
+
+
+## 9, d - Keeping green
+
+All the workflows we looked at so far were triggered by commits to the main branch. To make the workflow run for each pull request we would have to update the trigger part of the workflow. We use the "pull_request" trigger for branch "main" (our main branch) and limit the trigger to events "opened" and "synchronize". Basically, this means, that the workflow will run when a PR into the main branch is opened or updated.
+
+```on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+
+All looks good, but there is actually a pretty serious problem with the current workflow. All the steps, including the deployment, are run also for pull requests. This is surely something we do not want!
+
+Fortunately, there is an easy solution for the problem! We can add an if condition to the deployment step, which ensures that the step is executed only when the code is being merged or pushed to the main branch.
+
+The workflow context gives various kinds of information about the code the workflow is run.
+
+The relevant information is found in GitHub context, the field event_name tells us what is the "name" of the event that triggered the workflow. When a pull request is merged, the name of the event is somehow paradoxically push, the same event that happens when pushing the code to the repository. Thus, we get the desired behavior by adding the following condition to the step that deploys the code:
+
+if: ${{ github.event_name == 'push' }}
+
+
+Semantic Versioning and Hash Versioning
+How an application is versioned is sometimes called a versioning strategy. We'll look at and compare two such strategies.
+
+The first one is semantic versioning, where a version is in the form {major}.{minor}.{patch}. For example, if the version is 1.2.3, it has 1 as the major version, 2 is the minor version, and 3 is the patch version.
+
+
+In general, changes that fix the functionality without changing how the application works from the outside are patch changes, changes that make small changes to functionality (as viewed from the outside) are minor changes and changes that completely change the application (or major functionality changes) are major changes. The definitions of each of these terms can vary from project to project.
+
+
+
+Hash versioning (also sometimes known as SHA versioning) is quite different. The version "number" in hash versioning is a hash (that looks like a random string) derived from the contents of the repository and the changes introduced in the commit that created the version. In Git, this is already done for you as the commit hash that is unique for any change set.
+
+For the two repository based approaches, the approach with something in the code usually boils down to a version number in a file and the repo/metadata approach usually relies on tags or (in the case of GitHub) releases. In the case of tags or releases, this is relatively simple, the tag or release points to a commit, the code in that commit is the code in the release.
+
+From the comparison above, it would seem that the semantic versioning makes sense for releasing software while hash-based versioning (or artifact naming) makes more sense during development. This doesn't necessarily cause a conflict.
+
+
+
+Let's extend our workflow so that it will automatically increase (bump) the version when a pull request is merged into the main branch and tag the release with the version number. We will use an open source action developed by a third party: anothrNick/github-tag-action.
+
+
+We will extend our workflow with one more step:
+
+- name: Bump version and push tag
+  uses: anothrNick/github-tag-action@1.64.0
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+Note: you should use the most recent version of the action, see here if a more recent version is available.
+
+We're passing an environmental variable secrets.GITHUB_TOKEN to the action. As it is third party action, it needs the token for authentication in your repository. You can read more here about authentication in GitHub Actions.
+
+You may end up having this error message
+
+
+The most likely cause for this is that your token has no write access to your repo. Go to your repository settings, select actions/general, and ensure that your token has read and write permissions:
+
+
+The anothrNick/github-tag-action action accepts some environment variables that modify the way the action tags your releases. You can look at these in the README and see what suits your needs.
+
+As you can see from the documentation by default your releases will receive a minor bump, meaning that the middle number will be incremented.
+
+
+Remember that we want only to bump the version when the change happens to the main branch! So add a similar if condition to prevent version bumps on pull request as was done in Exercise 11.14 to prevent deployment on pull request related events.
+
+Complete now the workflow. Do not just add it as another step, but configure it as a separate job that depends on the job that takes care of linting, testing and deployment. So change your workflow definition as follows:
+
+```
+jobs:
+  simple_deployment_pipeline:
+    runs-on: ubuntu-20.04
+    steps:
+      // steps here
+  tag_release:
+    needs: [simple_deployment_pipeline]
+    runs-on: ubuntu-20.04
+    steps:
+      // steps here
+
+
+If you're uncertain of the configuration, you can set DRY_RUN to true, which will make the action output the next version number without creating or tagging the release!
