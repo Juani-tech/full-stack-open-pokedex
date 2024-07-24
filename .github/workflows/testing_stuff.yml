@@ -20,13 +20,13 @@ jobs:
         run: echo "$COMMITS"
       - name: commitsss
         env:
-          COMMITTSS: ${{ github.event.commits.*.message }}
+          COMMITTSS: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMITTSS"
       - name: easnv
         run: echo "$github.event"
       - name: commit messages
         env:
-          COMMIT_MESSAGES: ${{ github.event.commits.*.message }}
+          COMMIT_MESSAGES: ${{ join(toJson(github.event.commits.*.message), ',') }}
         run: echo "$COMMIT_MESSAGES"
       - name: check for skip
         if: contains(env.COMMIT_MESSAGES, '#SKIP')
